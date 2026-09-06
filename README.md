@@ -25,7 +25,7 @@ pip install "aikit[embeddings,db,queue,observability,http]"  # à la carte
 ```
 Consume from GitHub before the first PyPI release:
 ```bash
-pip install "aikit @ git+https://github.com/YOUR_USERNAME/aikit@v0.1.0"
+pip install "aikit @ git+https://github.com/Aaryan123456679/aikit@v0.1.0"
 ```
 
 ## Develop

@@ -3,4 +3,4 @@
 Public interfaces (SOLID contracts) live here. Concrete implementations are
 optional and gated behind extras so consumers pull only what they use.
 """
-__version__ = "0.0.0"
+__version__ = "0.1.0"
