@@ -12,7 +12,7 @@ from collections.abc import AsyncIterator
 
 import httpx
 
-from . import ChatMessage, Completion
+from . import ChatMessage, Completion, StreamEvent, Usage
 
 
 class OllamaClient:
@@ -54,7 +54,7 @@ class OllamaClient:
 
     async def stream(
         self, messages: list[ChatMessage], *, model: str | None = None
-    ) -> AsyncIterator[str]:
+    ) -> AsyncIterator[StreamEvent]:
         payload = {
             "model": model or self._default_model,
             "messages": [{"role": m.role, "content": m.content} for m in messages],
@@ -69,6 +69,12 @@ class OllamaClient:
                 piece = chunk.get("message", {}).get("content")
                 if piece:
                     yield piece
+                if chunk.get("done"):
+                    yield Usage(
+                        tokens_in=chunk.get("prompt_eval_count", 0),
+                        tokens_out=chunk.get("eval_count", 0),
+                        finish_reason=chunk.get("done_reason", "stop"),
+                    )
 
     async def health(self) -> bool:
         try:

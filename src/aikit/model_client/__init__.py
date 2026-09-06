@@ -28,6 +28,18 @@ class Completion:
     latency_ms: float
 
 
+@dataclass(frozen=True)
+class Usage:
+    """Terminal event on a `stream()` iterator: exactly one, always last."""
+
+    tokens_in: int
+    tokens_out: int
+    finish_reason: str
+
+
+StreamEvent = str | Usage
+
+
 @runtime_checkable
 class ModelClient(Protocol):
     """A single LLM backend. Implementations: OllamaClient, HostedClient."""
@@ -40,9 +52,11 @@ class ModelClient(Protocol):
 
     def stream(
         self, messages: list[ChatMessage], *, model: str | None = None
-    ) -> AsyncIterator[str]:
+    ) -> AsyncIterator[StreamEvent]:
         """An async-generator method: called directly (no `await`), then
-        iterated with `async for`. Implementations use `async def ... yield`."""
+        iterated with `async for`. Yields text deltas (`str`) followed by
+        exactly one terminal `Usage` — callers can accumulate text and read
+        cost/finish_reason off the last event without a second round trip."""
         ...
 
     async def health(self) -> bool: ...
