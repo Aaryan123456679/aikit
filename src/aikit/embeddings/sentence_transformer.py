@@ -18,7 +18,10 @@ class SentenceTransformerEmbeddingService:
 
     def __init__(self, model_name: str = "all-MiniLM-L6-v2") -> None:
         self._model = SentenceTransformer(model_name)
-        self.dim = self._model.get_sentence_embedding_dimension()
+        dim = self._model.get_sentence_embedding_dimension()
+        if dim is None:
+            raise ValueError(f"model {model_name!r} did not report an embedding dimension")
+        self.dim: int = dim
 
     async def embed(self, texts: list[str]) -> list[Vector]:
         loop = asyncio.get_running_loop()
