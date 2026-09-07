@@ -7,8 +7,6 @@ inference gateway, agent-memory service). Publishes clean, SOLID interfaces
 and reusable infrastructure so each downstream service depends on contracts,
 not implementations.
 
-> Rename `aikit` to a unique name before publishing to PyPI.
-
 ## Modules
 | Module | Contract | Concrete implementation |
 |---|---|---|
@@ -56,14 +54,21 @@ gaps `eval-platform`'s status page called out:
 **Still open**: `JudgeScorer` (in eval-platform) has no live-model test.
 
 ## Install
-Core is light. Heavy deps are extras:
+Published on PyPI as `aikit-platform` (the import name is still `aikit` -
+only the distribution name differs, because the name `aikit` itself is
+already taken by an unrelated package). Core is light; heavy deps are
+extras:
 ```bash
-pip install "aikit[eval]"      # or [gateway], [memory]
-pip install "aikit[embeddings,db,queue,observability,http]"  # à la carte
+pip install "aikit-platform[eval]"      # or [gateway], [memory]
+pip install "aikit-platform[embeddings,db,queue,observability,http]"  # à la carte
 ```
-Consume from GitHub before the first PyPI release:
+```python
+import aikit  # same import either way
+```
+Pin an exact tag from GitHub instead, if you want the git history alongside
+the code (this is what eval-platform/gateway/agent-memory all do):
 ```bash
-pip install "aikit @ git+https://github.com/Aaryan123456679/aikit@v0.1.0"
+pip install "aikit-platform[gateway] @ git+https://github.com/Aaryan123456679/aikit@v0.2.0"
 ```
 
 ## Develop
@@ -73,9 +78,4 @@ make install && make all
 
 ## Release
 Tag-driven: `git tag vX.Y.Z && git push origin vX.Y.Z` → CI builds and
-attempts to publish to PyPI via trusted publishing (OIDC, no secrets).
-**Not yet wired up**: this requires registering the repo as a trusted
-publisher for a project named `aikit` on pypi.org first (a one-time, manual
-step on PyPI's side — `aikit` may also already be taken as a name, per the
-warning above). Until that's done, `release.yml` will build correctly but
-fail at the publish step; consume via the GitHub git URL above instead.
+publishes to PyPI via trusted publishing (OIDC, no secrets in the repo).
