@@ -25,8 +25,28 @@ class Base(DeclarativeBase):
     """Declarative base every downstream service builds its ORM models on."""
 
 
-def make_engine(database_url: str, *, echo: bool = False) -> AsyncEngine:
-    return create_async_engine(database_url, echo=echo, pool_pre_ping=True)
+def make_engine(
+    database_url: str,
+    *,
+    echo: bool = False,
+    pool_size: int = 5,
+    max_overflow: int = 10,
+) -> AsyncEngine:
+    # pool_size/max_overflow default to SQLAlchemy's own defaults (5, 10 -
+    # 15 concurrent connections total), so existing callers see no change.
+    # Found via load-testing the gateway at real concurrency: every request
+    # that logs to Postgres holds a connection for that write, so a
+    # service's real concurrency ceiling is min(this pool, everything
+    # else) - callers expecting more than ~15 concurrent in-flight DB
+    # operations need to size this explicitly rather than discover the
+    # default under load.
+    return create_async_engine(
+        database_url,
+        echo=echo,
+        pool_pre_ping=True,
+        pool_size=pool_size,
+        max_overflow=max_overflow,
+    )
 
 
 def make_sessionmaker(engine: AsyncEngine) -> async_sessionmaker[AsyncSession]:
