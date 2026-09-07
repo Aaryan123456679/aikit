@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from typing import Any
 
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
@@ -29,24 +30,25 @@ def make_engine(
     database_url: str,
     *,
     echo: bool = False,
-    pool_size: int = 5,
-    max_overflow: int = 10,
+    pool_size: int | None = None,
+    max_overflow: int | None = None,
 ) -> AsyncEngine:
-    # pool_size/max_overflow default to SQLAlchemy's own defaults (5, 10 -
-    # 15 concurrent connections total), so existing callers see no change.
-    # Found via load-testing the gateway at real concurrency: every request
-    # that logs to Postgres holds a connection for that write, so a
-    # service's real concurrency ceiling is min(this pool, everything
-    # else) - callers expecting more than ~15 concurrent in-flight DB
-    # operations need to size this explicitly rather than discover the
-    # default under load.
-    return create_async_engine(
-        database_url,
-        echo=echo,
-        pool_pre_ping=True,
-        pool_size=pool_size,
-        max_overflow=max_overflow,
-    )
+    # pool_size/max_overflow default to None (omitted entirely) rather
+    # than SQLAlchemy's own QueuePool defaults (5/10), because those two
+    # kwargs are QueuePool-specific and blow up with a TypeError against
+    # any other pool class - including SQLite's StaticPool, which this
+    # project's own test suite uses. Omitting them when unset preserves
+    # exact prior behavior for every caller that doesn't pass them.
+    # Callers on Postgres that want a bigger pool (found necessary load-
+    # testing the gateway: every request that logs to Postgres holds a
+    # connection for that write, so 50 concurrent requests need more than
+    # QueuePool's own default 15-connection ceiling) pass them explicitly.
+    kwargs: dict[str, Any] = {"echo": echo, "pool_pre_ping": True}
+    if pool_size is not None:
+        kwargs["pool_size"] = pool_size
+    if max_overflow is not None:
+        kwargs["max_overflow"] = max_overflow
+    return create_async_engine(database_url, **kwargs)
 
 
 def make_sessionmaker(engine: AsyncEngine) -> async_sessionmaker[AsyncSession]:
