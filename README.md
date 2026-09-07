@@ -1,5 +1,7 @@
 # aikit
 
+*The shared library behind three AI-backend services — see the [AI Infrastructure Suite overview](https://github.com/Aaryan123456679/ai-infrastructure-suite).*
+
 Shared platform layer for a suite of AI-backend systems (LLM eval platform,
 inference gateway, agent-memory service). Publishes clean, SOLID interfaces
 and reusable infrastructure so each downstream service depends on contracts,
