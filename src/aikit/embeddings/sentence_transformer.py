@@ -17,7 +17,16 @@ class SentenceTransformerEmbeddingService:
     """LSP: substitutable anywhere an `EmbeddingService` is expected."""
 
     def __init__(self, model_name: str = "all-MiniLM-L6-v2") -> None:
-        self._model = SentenceTransformer(model_name)
+        # device="cpu" is deliberate, not a missing feature: auto-detection
+        # picks MPS/CUDA when available, but a server process calls encode()
+        # from multiple concurrent executor threads (one per in-flight
+        # request), and MPS does not tolerate concurrent access from
+        # multiple threads reliably - it can crash the whole process rather
+        # than raise a catchable exception. CPU is also the right choice
+        # for this workload's shape (many small, single-item, latency-
+        # sensitive calls), where GPU dispatch overhead would dominate
+        # anyway.
+        self._model = SentenceTransformer(model_name, device="cpu")
         dim = self._model.get_sentence_embedding_dimension()
         if dim is None:
             raise ValueError(f"model {model_name!r} did not report an embedding dimension")
